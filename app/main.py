@@ -167,6 +167,50 @@ async def happyrobot_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Error processing webhook")
 
 
+@app.post("/api/v1/test/webhook")
+async def test_webhook_processing():
+    """
+    Test endpoint to verify webhook processing works
+    """
+    try:
+        # Create a test webhook payload similar to what HappyRobot would send
+        test_payload = {
+            "event_type": "call_completed",
+            "call_data": {
+                "call_id": "test_123",
+                "start_time": "2024-12-12T10:00:00Z",
+                "end_time": "2024-12-12T10:05:00Z",
+                "transcript": "Test call transcript"
+            },
+            "extracted_data": {
+                "carrier_mc_number": "123456",
+                "carrier_company_name": "Test Trucking LLC", 
+                "equipment_type": "Dry Van",
+                "call_outcome": "successful_booking",
+                "carrier_sentiment": "positive",
+                "final_agreed_rate": "1500.00",
+                "discussed_load_id": "TEST001"
+            }
+        }
+        
+        # Process it through our webhook handler
+        from app.services.call_service import CallService
+        from app.database.connection import get_db_session
+        
+        with get_db_session() as db:
+            call_service = CallService(db)
+            result = await call_service.process_happyrobot_webhook(test_payload)
+        
+        return {
+            "status": "success",
+            "message": "Test call data created",
+            "call_id": result.call_id if result else "unknown"
+        }
+        
+    except Exception as e:
+        logger.error("Test webhook processing failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}")
+
 @app.post("/api/v1/test/web-call")
 async def trigger_web_call():
     """
