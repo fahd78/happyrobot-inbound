@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  happyrobot-api:
+    build: .
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=sqlite:///./data/happyrobot.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+  # Optional: Add a reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - happyrobot-api
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  data:
+    driver: local
