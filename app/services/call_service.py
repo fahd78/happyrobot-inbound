@@ -5,7 +5,10 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import structlog
 from app.models.call import Call, CallCreate, CallUpdate, CallOutcome, CallSentiment, CallSummary
+
+logger = structlog.get_logger()
 
 
 class CallService:
@@ -280,3 +283,95 @@ class CallService:
             return CallSentiment.POSITIVE
         else:
             return CallSentiment.NEUTRAL
+    
+    async def process_happyrobot_webhook(self, webhook_payload: Dict[str, Any]) -> Optional[Call]:
+        """
+        Process incoming HappyRobot webhook data and store call information
+        
+        Args:
+            webhook_payload: Full webhook payload from HappyRobot
+            
+        Returns:
+            Call: Created or updated call record
+        """
+        try:
+            # Extract call data and extracted fields from webhook
+            call_data = webhook_payload.get("call_data", {})
+            extracted_data = webhook_payload.get("extracted_data", {})
+            
+            # Generate call ID from HappyRobot call ID or use timestamp
+            happyrobot_call_id = call_data.get("call_id", "")
+            call_id = f"hr_{happyrobot_call_id}" if happyrobot_call_id else f"call_{int(datetime.utcnow().timestamp())}"
+            
+            # Map extracted data to call fields
+            carrier_mc = extracted_data.get("carrier_mc_number")
+            company_name = extracted_data.get("carrier_company_name")
+            outcome_str = extracted_data.get("call_outcome", "unknown")
+            sentiment_str = extracted_data.get("carrier_sentiment", "neutral")
+            
+            # Convert strings to enums
+            try:
+                outcome = CallOutcome(outcome_str.lower()) if outcome_str else CallOutcome.UNKNOWN
+            except ValueError:
+                outcome = CallOutcome.UNKNOWN
+                
+            try:
+                sentiment = CallSentiment(sentiment_str.lower()) if sentiment_str else CallSentiment.NEUTRAL
+            except ValueError:
+                sentiment = CallSentiment.NEUTRAL
+            
+            # Get timing information
+            start_time = datetime.utcnow()  # Default to now if not provided
+            if call_data.get("start_time"):
+                try:
+                    start_time = datetime.fromisoformat(call_data["start_time"].replace("Z", "+00:00"))
+                except:
+                    pass
+            
+            end_time = datetime.utcnow()
+            if call_data.get("end_time"):
+                try:
+                    end_time = datetime.fromisoformat(call_data["end_time"].replace("Z", "+00:00"))
+                except:
+                    pass
+            
+            # Calculate duration
+            duration_seconds = int((end_time - start_time).total_seconds())
+            
+            # Get final rate if available
+            final_rate = None
+            if extracted_data.get("final_agreed_rate"):
+                try:
+                    final_rate = float(extracted_data["final_agreed_rate"])
+                except (ValueError, TypeError):
+                    pass
+            
+            # Create call record
+            call_create = CallCreate(
+                call_id=call_id,
+                carrier_mc_number=carrier_mc,
+                happyrobot_call_id=happyrobot_call_id,
+                start_time=start_time,
+                end_time=end_time,
+                duration_seconds=duration_seconds,
+                outcome=outcome,
+                sentiment=sentiment,
+                discussed_load_id=extracted_data.get("discussed_load_id"),
+                final_rate=final_rate,
+                transcript=call_data.get("transcript", ""),
+                extracted_data=extracted_data
+            )
+            
+            # Store the call
+            call_record = self.create_call(call_create)
+            
+            logger.info("Successfully processed HappyRobot webhook", 
+                       call_id=call_id, 
+                       carrier_mc=carrier_mc,
+                       outcome=outcome.value if outcome else "unknown")
+            
+            return call_record
+            
+        except Exception as e:
+            logger.error("Error processing HappyRobot webhook", error=str(e), payload=webhook_payload)
+            raise

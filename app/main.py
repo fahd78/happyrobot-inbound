@@ -140,9 +140,18 @@ async def happyrobot_webhook(request: Request):
             # Handle call start
             logger.info("Processing call started event", call_id=call_data.get("call_id"))
             
-        elif event_type == "call_ended":
-            # Handle call end
-            logger.info("Processing call ended event", call_id=call_data.get("call_id"))
+        elif event_type == "call_ended" or event_type == "call_completed":
+            # Handle call end - process and store call data
+            logger.info("Processing call completed event", call_id=call_data.get("call_id"))
+            
+            # Import call service to process the data
+            from app.services.call_service import CallService
+            from app.database.connection import get_db_session
+            
+            # Get database session and process the webhook call data
+            with get_db_session() as db:
+                call_service = CallService(db)
+                await call_service.process_happyrobot_webhook(payload)
             
         elif event_type == "call_transcript":
             # Handle transcript received
