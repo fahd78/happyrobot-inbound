@@ -142,16 +142,25 @@ async def happyrobot_webhook(request: Request):
             
         elif event_type == "call_ended" or event_type == "call_completed":
             # Handle call end - process and store call data
-            logger.info("Processing call completed event", call_id=call_data.get("call_id"))
+            logger.info("Processing call completed event", 
+                       call_id=call_data.get("happyrobot_call_id"),
+                       payload_keys=list(payload.keys()),
+                       call_data_keys=list(call_data.keys()))
             
-            # Import call service to process the data
-            from app.services.call_service import CallService
-            from app.database.connection import get_db_session
-            
-            # Get database session and process the webhook call data
-            with get_db_session() as db:
-                call_service = CallService(db)
-                await call_service.process_happyrobot_webhook(payload)
+            try:
+                # Import call service to process the data
+                from app.services.call_service import CallService
+                from app.database.connection import get_db_session
+                
+                # Get database session and process the webhook call data
+                with get_db_session() as db:
+                    call_service = CallService(db)
+                    result = await call_service.process_happyrobot_webhook(payload)
+                    logger.info("Webhook processing result", success=result is not None)
+                    
+            except Exception as db_error:
+                logger.error("Database processing failed", error=str(db_error))
+                # Don't fail the webhook, just log the error
             
         elif event_type == "call_transcript":
             # Handle transcript received
@@ -163,8 +172,11 @@ async def happyrobot_webhook(request: Request):
         return {"status": "received", "event_type": event_type}
         
     except Exception as e:
-        logger.error("Error processing webhook", error=str(e))
-        raise HTTPException(status_code=400, detail="Error processing webhook")
+        logger.error("Error processing webhook", 
+                    error=str(e), 
+                    error_type=type(e).__name__,
+                    payload=payload if 'payload' in locals() else "no_payload")
+        return {"status": "error", "message": str(e), "event_type": payload.get("event_type") if 'payload' in locals() else "unknown"}
 
 
 @app.post("/api/v1/test/webhook")
