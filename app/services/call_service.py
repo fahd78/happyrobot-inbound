@@ -297,10 +297,27 @@ class CallService:
         try:
             # Extract call data and extracted fields from webhook
             call_data = webhook_payload.get("call_data", {})
-            extracted_data = webhook_payload.get("extracted_data", {})
+            
+            # Handle extracted_data - could be inside call_data as string or direct object
+            extracted_data = {}
+            if "extracted_data" in call_data:
+                # If it's a string, try to parse as JSON
+                raw_extracted = call_data.get("extracted_data")
+                if isinstance(raw_extracted, str):
+                    try:
+                        import json
+                        extracted_data = json.loads(raw_extracted)
+                    except:
+                        logger.warning("Could not parse extracted_data as JSON", raw_data=raw_extracted)
+                        extracted_data = {}
+                else:
+                    extracted_data = raw_extracted or {}
+            else:
+                # Fallback to top-level extracted_data
+                extracted_data = webhook_payload.get("extracted_data", {})
             
             # Generate call ID from HappyRobot call ID or use timestamp
-            happyrobot_call_id = call_data.get("call_id", "")
+            happyrobot_call_id = call_data.get("happyrobot_call_id", "")
             call_id = f"hr_{happyrobot_call_id}" if happyrobot_call_id else f"call_{int(datetime.utcnow().timestamp())}"
             
             # Map extracted data to call fields
@@ -373,5 +390,10 @@ class CallService:
             return call_record
             
         except Exception as e:
-            logger.error("Error processing HappyRobot webhook", error=str(e), payload=webhook_payload)
-            raise
+            logger.error("Error processing HappyRobot webhook", 
+                        error=str(e), 
+                        error_type=type(e).__name__,
+                        payload=webhook_payload,
+                        extracted_data=extracted_data if 'extracted_data' in locals() else "not_extracted")
+            # Don't raise the exception, just log it and return None
+            return None
