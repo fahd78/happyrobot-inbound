@@ -162,6 +162,17 @@ async def get_call_summary(
     
     return summary
 
+@router.get("/analytics/dashboard", response_model=CallSummary)
+async def get_dashboard_summary(
+    days: int = 30,
+    db: Session = Depends(get_database)
+):
+    """Get call analytics summary for dashboard (no auth required)"""
+    call_service = CallService(db)
+    summary = call_service.get_call_summary(days=days)
+    
+    return summary
+
 
 @router.post("/{call_id}/classify")
 async def classify_call(
