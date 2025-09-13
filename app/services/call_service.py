@@ -363,24 +363,32 @@ class CallService:
                 except (ValueError, TypeError):
                     pass
             
-            # Create call record
+            # Create basic call record
             call_create = CallCreate(
                 call_id=call_id,
                 carrier_mc_number=carrier_mc,
-                happyrobot_call_id=happyrobot_call_id,
                 start_time=start_time,
+                happyrobot_call_id=happyrobot_call_id
+            )
+            
+            # Store the basic call
+            call_record = self.create_call(call_create)
+            
+            # Update with extracted data
+            from app.models.call import CallUpdate
+            call_update = CallUpdate(
                 end_time=end_time,
                 duration_seconds=duration_seconds,
                 outcome=outcome,
                 sentiment=sentiment,
                 discussed_load_id=extracted_data.get("discussed_load_id"),
-                final_rate=final_rate,
+                final_negotiated_rate=final_rate,
                 transcript=call_data.get("transcript", ""),
                 extracted_data=extracted_data
             )
             
-            # Store the call
-            call_record = self.create_call(call_create)
+            # Update the call with extracted data
+            call_record = self.update_call(call_id, call_update)
             
             logger.info("Successfully processed HappyRobot webhook", 
                        call_id=call_id, 
