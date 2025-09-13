@@ -150,13 +150,16 @@ async def happyrobot_webhook(request: Request):
             try:
                 # Import call service to process the data
                 from app.services.call_service import CallService
-                from app.database.connection import get_db_session
+                from app.database.connection import SessionLocal
                 
                 # Get database session and process the webhook call data
-                with get_db_session() as db:
+                db = SessionLocal()
+                try:
                     call_service = CallService(db)
                     result = await call_service.process_happyrobot_webhook(payload)
                     logger.info("Webhook processing result", success=result is not None)
+                finally:
+                    db.close()
                     
             except Exception as db_error:
                 logger.error("Database processing failed", error=str(db_error))
@@ -207,11 +210,14 @@ async def test_webhook_processing():
         
         # Process it through our webhook handler
         from app.services.call_service import CallService
-        from app.database.connection import get_db_session
+        from app.database.connection import SessionLocal
         
-        with get_db_session() as db:
+        db = SessionLocal()
+        try:
             call_service = CallService(db)
             result = await call_service.process_happyrobot_webhook(test_payload)
+        finally:
+            db.close()
         
         return {
             "status": "success",
