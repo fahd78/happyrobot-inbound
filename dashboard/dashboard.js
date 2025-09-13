@@ -3,7 +3,7 @@
  */
 
 // Configuration
-const API_BASE_URL = window.location.origin + '/api/v1';
+const API_BASE_URL = window.location.origin.replace('http:', 'https:') + '/api/v1';
 const API_KEY = 'dev-api-key-change-in-production'; // In production, get from secure storage
 
 // API client with authentication
