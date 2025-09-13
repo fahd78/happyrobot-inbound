@@ -89,21 +89,16 @@ class Dashboard {
         const { 
             total_calls, 
             successful_bookings, 
-            conversion_rate 
+            conversion_rate,
+            average_duration
         } = this.data.summary;
 
         document.getElementById('totalCalls').textContent = total_calls || 0;
         document.getElementById('successfulBookings').textContent = successful_bookings || 0;
         document.getElementById('conversionRate').textContent = 
             conversion_rate ? `${conversion_rate.toFixed(1)}%` : '0%';
-        
-        // Calculate unique carriers from recent calls
-        const uniqueCarriers = new Set(
-            this.data.recentCalls
-                .filter(call => call.carrier_mc_number)
-                .map(call => call.carrier_mc_number)
-        ).size;
-        document.getElementById('totalCarriers').textContent = uniqueCarriers || 0;
+        document.getElementById('avgDuration').textContent = 
+            average_duration ? `${Math.round(average_duration / 60)}min` : '--min';
     }
 
     updateCharts() {
@@ -245,7 +240,7 @@ class Dashboard {
                 ${call.carrier_mc_number || '--'}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${call.final_negotiated_rate ? '$' + parseFloat(call.final_negotiated_rate).toFixed(0) : '--'}
+                ${formatDuration(call.duration_seconds)}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 ${getOutcomeBadge(call.outcome)}
