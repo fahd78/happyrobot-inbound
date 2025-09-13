@@ -174,6 +174,18 @@ async def get_dashboard_summary(
     return summary
 
 
+@router.get("/dashboard/recent", response_model=List[CallResponse])
+async def get_dashboard_recent_calls(
+    limit: int = 20,
+    db: Session = Depends(get_database)
+):
+    """Get recent calls for dashboard (no auth required)"""
+    call_service = CallService(db)
+    db_calls = call_service.get_recent_calls(limit=limit)
+    
+    return [CallResponse.model_validate(call) for call in db_calls]
+
+
 @router.post("/{call_id}/classify")
 async def classify_call(
     call_id: str,

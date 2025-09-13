@@ -43,7 +43,7 @@ class APIClient {
     }
 
     async getRecentCalls(limit = 20) {
-        return this.request(`/calls?limit=${limit}`);
+        return this.request(`/calls/dashboard/recent?limit=${limit}`);
     }
 }
 
