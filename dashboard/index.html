@@ -10,13 +10,12 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="min-h-screen">
-        <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <h1 class="text-2xl font-bold text-gray-900">🤖 HappyRobot</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">HappyRobot</h1>
                             <p class="text-sm text-gray-500">Inbound Carrier Sales Dashboard</p>
                         </div>
                     </div>
@@ -32,9 +31,7 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Key Metrics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
@@ -75,32 +72,28 @@
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-600">Avg Call Duration</p>
-                            <p class="text-2xl font-bold text-orange-600" id="avgDuration">--min</p>
+                            <p class="text-sm font-medium text-gray-600">Total Carriers</p>
+                            <p class="text-2xl font-bold text-orange-600" id="totalCarriers">--</p>
                         </div>
                         <div class="bg-orange-100 p-3 rounded-full">
-                            <i class="fas fa-clock text-orange-600"></i>
+                            <i class="fas fa-truck text-orange-600"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Row -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <!-- Call Outcomes Chart -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Call Outcomes</h3>
                     <div id="outcomeChart" style="height: 300px;"></div>
                 </div>
 
-                <!-- Sentiment Analysis Chart -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Carrier Sentiment</h3>
                     <div id="sentimentChart" style="height: 300px;"></div>
                 </div>
             </div>
 
-            <!-- Recent Calls Table -->
             <div class="bg-white rounded-lg shadow">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">Recent Calls</h3>
@@ -116,7 +109,7 @@
                                     Carrier MC
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Duration
+                                    Final Rate
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Outcome
@@ -130,7 +123,6 @@
                             </tr>
                         </thead>
                         <tbody id="recentCallsTable" class="bg-white divide-y divide-gray-200">
-                            <!-- Table rows will be populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
