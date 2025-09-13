@@ -39,7 +39,7 @@ class APIClient {
     }
 
     async getCallSummary(days = 30) {
-        return this.request(`/calls/analytics/summary?days=${days}`);
+        return this.request(`/calls/analytics/dashboard?days=${days}`);
     }
 
     async getRecentCalls(limit = 20) {
