@@ -1,6 +1,3 @@
-"""
-Call management API endpoints
-"""
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -18,10 +15,8 @@ async def create_call(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Create a new call record"""
     call_service = CallService(db)
     
-    # Check if call already exists
     existing_call = call_service.get_call(call_data.call_id)
     if existing_call:
         raise HTTPException(
@@ -39,7 +34,6 @@ async def get_call(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Get a specific call by ID"""
     call_service = CallService(db)
     db_call = call_service.get_call(call_id)
     
@@ -59,7 +53,6 @@ async def update_call(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Update an existing call"""
     call_service = CallService(db)
     db_call = call_service.update_call(call_id, call_update)
     
@@ -80,7 +73,6 @@ async def get_calls_by_carrier(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Get calls for a specific carrier"""
     call_service = CallService(db)
     db_calls = call_service.get_calls_by_carrier(mc_number, skip=skip, limit=limit)
     
@@ -93,7 +85,6 @@ async def get_recent_calls(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Get recent calls across all carriers"""
     call_service = CallService(db)
     db_calls = call_service.get_recent_calls(limit=limit)
     
@@ -108,7 +99,6 @@ async def end_call(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """End a call and set outcome/sentiment"""
     call_service = CallService(db)
     db_call = call_service.end_call(call_id, outcome, sentiment)
     
@@ -133,7 +123,6 @@ async def extract_call_data(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Add extracted data from call analysis"""
     call_service = CallService(db)
     db_call = call_service.extract_call_data(call_id, extracted_data)
     
@@ -156,7 +145,6 @@ async def get_call_summary(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Get call analytics summary"""
     call_service = CallService(db)
     summary = call_service.get_call_summary(days=days)
     
@@ -167,7 +155,6 @@ async def get_dashboard_summary(
     days: int = 30,
     db: Session = Depends(get_database)
 ):
-    """Get call analytics summary for dashboard (no auth required)"""
     call_service = CallService(db)
     summary = call_service.get_call_summary(days=days)
     
@@ -179,7 +166,6 @@ async def get_dashboard_recent_calls(
     limit: int = 20,
     db: Session = Depends(get_database)
 ):
-    """Get recent calls for dashboard (no auth required)"""
     call_service = CallService(db)
     db_calls = call_service.get_recent_calls(limit=limit)
     
@@ -196,10 +182,8 @@ async def classify_call(
     _: bool = Depends(verify_api_key),
     db: Session = Depends(get_database)
 ):
-    """Classify call outcome and sentiment"""
     call_service = CallService(db)
     
-    # Get the call to ensure it exists
     db_call = call_service.get_call(call_id)
     if not db_call:
         raise HTTPException(
@@ -207,11 +191,9 @@ async def classify_call(
             detail=f"Call with ID {call_id} not found"
         )
     
-    # Use transcript from call record if not provided
     if not transcript and db_call.transcript:
         transcript = db_call.transcript
     
-    # Classify outcome and sentiment
     outcome = call_service.classify_call_outcome(
         transcript=transcript or "",
         negotiation_successful=negotiation_successful,
@@ -221,7 +203,6 @@ async def classify_call(
     
     sentiment = call_service.classify_call_sentiment(transcript or "")
     
-    # Update call with classifications
     call_update = CallUpdate(
         outcome=outcome,
         sentiment=sentiment

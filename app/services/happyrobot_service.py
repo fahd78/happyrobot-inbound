@@ -1,6 +1,3 @@
-"""
-HappyRobot platform integration service
-"""
 import json
 from typing import Dict, Any, Optional
 import httpx
@@ -9,7 +6,6 @@ from app.core.security import create_api_key_header
 
 
 class HappyRobotService:
-    """Service for integrating with the HappyRobot platform"""
     
     def __init__(self):
         self.base_url = "https://platform.happyrobot.ai/api/v1" 
@@ -19,15 +15,6 @@ class HappyRobotService:
         self.workflow_id = settings.happyrobot_workflow_id
     
     async def create_inbound_agent(self, agent_config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Create an inbound agent on the HappyRobot platform
-        
-        Args:
-            agent_config: Agent configuration
-            
-        Returns:
-            Dict[str, Any]: Created agent details
-        """
         async with httpx.AsyncClient() as client:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
@@ -47,15 +34,6 @@ class HappyRobotService:
                 raise Exception(f"Failed to create agent: {response.status_code} - {response.text}")
     
     async def configure_call_workflow(self, workflow_config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Configure the call workflow for the inbound agent
-        
-        Args:
-            workflow_config: Workflow configuration
-            
-        Returns:
-            Dict[str, Any]: Workflow configuration result
-        """
         async with httpx.AsyncClient() as client:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
@@ -75,12 +53,6 @@ class HappyRobotService:
                 raise Exception(f"Failed to configure workflow: {response.status_code} - {response.text}")
     
     def get_agent_prompt(self) -> str:
-        """
-        Get the AI agent prompt for carrier calls
-        
-        Returns:
-            str: Agent prompt template
-        """
         return """
         You are a professional freight broker assistant handling inbound calls from truck drivers and carriers looking for loads.
 
@@ -111,12 +83,6 @@ class HappyRobotService:
         """
     
     def get_workflow_config(self) -> Dict[str, Any]:
-        """
-        Get the complete workflow configuration for the HappyRobot agent
-        
-        Returns:
-            Dict[str, Any]: Workflow configuration
-        """
         return {
             "name": "Inbound Carrier Sales Agent",
             "description": "AI agent for handling inbound carrier calls and load booking",
@@ -161,7 +127,7 @@ class HappyRobotService:
                 }
             ],
             "settings": {
-                "max_call_duration": 600,  # 10 minutes
+                "max_call_duration": 600
                 "enable_recording": True,
                 "enable_transcription": True,
                 "language": "en-US",
@@ -171,15 +137,6 @@ class HappyRobotService:
         }
     
     async def trigger_web_call(self, phone_number: str = None) -> Dict[str, Any]:
-        """
-        Trigger a web call using existing workflow
-        
-        Args:
-            phone_number: Optional phone number (not used for web calls)
-            
-        Returns:
-            Dict[str, Any]: Call trigger response
-        """
         if not self.workflow_id:
             raise Exception("Workflow ID not configured. Please set HAPPYROBOT_WORKFLOW_ID in environment.")
         
@@ -188,14 +145,12 @@ class HappyRobotService:
                 "Content-Type": "application/json"
             }
             
-            # Use HappyRobot webhook trigger endpoint based on documentation
             webhook_endpoint = f"https://workflows.platform.happyrobot.ai/hooks/{self.workflow_id}"
             
-            # Web call trigger payload - can include phone number or other data
             call_config = {
                 "trigger_type": "web_call",
                 "organization_id": self.org_id,
-                "phone_number": phone_number if phone_number else "+15551234567"  # Demo number
+                "phone_number": phone_number if phone_number else "+15551234567"
             }
             
             try:
@@ -229,15 +184,6 @@ class HappyRobotService:
                 }
     
     async def get_call_transcript(self, call_id: str) -> Optional[str]:
-        """
-        Get call transcript from HappyRobot
-        
-        Args:
-            call_id: HappyRobot call ID
-            
-        Returns:
-            str: Call transcript or None if not available
-        """
         async with httpx.AsyncClient() as client:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",

@@ -1,12 +1,6 @@
-/**
- * HappyRobot Carrier Sales Dashboard JavaScript
- */
-
-// Configuration
 const API_BASE_URL = window.location.origin.replace('http:', 'https:') + '/api/v1';
-const API_KEY = 'dev-api-key-change-in-production'; // In production, get from secure storage
+const API_KEY = 'dev-api-key-change-in-production';
 
-// API client with authentication
 class APIClient {
     constructor(baseUrl, apiKey) {
         this.baseUrl = baseUrl;
@@ -47,10 +41,8 @@ class APIClient {
     }
 }
 
-// Initialize API client
 const api = new APIClient(API_BASE_URL, API_KEY);
 
-// Dashboard data management
 class Dashboard {
     constructor() {
         this.data = {
@@ -61,11 +53,9 @@ class Dashboard {
 
     async loadData() {
         try {
-            // Load call summary
             this.data.summary = await api.getCallSummary();
             console.log('Summary data loaded:', this.data.summary);
 
-            // Load recent calls
             this.data.recentCalls = await api.getRecentCalls();
             console.log('Recent calls loaded:', this.data.recentCalls);
 
@@ -97,7 +87,6 @@ class Dashboard {
         document.getElementById('conversionRate').textContent = 
             conversion_rate ? `${conversion_rate.toFixed(1)}%` : '0%';
         
-        // Calculate unique carriers from recent calls
         const uniqueCarriers = new Set(
             this.data.recentCalls
                 .filter(call => call.carrier_mc_number)
@@ -292,10 +281,8 @@ class Dashboard {
     }
 
     showError(message) {
-        // Simple error display - could be enhanced with toast notifications
         console.error('Dashboard error:', message);
         
-        // Show error in metric cards
         document.getElementById('totalCalls').textContent = 'Error';
         document.getElementById('successfulBookings').textContent = 'Error';
         document.getElementById('conversionRate').textContent = 'Error';

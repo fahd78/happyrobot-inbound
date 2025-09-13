@@ -1,6 +1,3 @@
-"""
-Main FastAPI application for HappyRobot Inbound Carrier Sales
-"""
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -14,7 +11,6 @@ from app.core.config import settings
 from app.database.connection import init_database
 from app.api import loads, carriers, calls, negotiations
 
-# Configure structured logging
 structlog.configure(
     processors=[
         structlog.dev.ConsoleRenderer(colors=True)
@@ -30,21 +26,16 @@ logger = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan management"""
-    # Startup
     logger.info("Starting HappyRobot Inbound Carrier Sales API", environment=settings.environment)
     
-    # Initialize database
     init_database()
     logger.info("Database initialized")
     
     yield
     
-    # Shutdown
     logger.info("Shutting down HappyRobot Inbound Carrier Sales API")
 
 
-# Create FastAPI application
 app = FastAPI(
     title="HappyRobot Inbound Carrier Sales API",
     description="""
@@ -67,7 +58,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if settings.debug else ["https://yourdomain.com"],
@@ -76,19 +66,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routers
 app.include_router(loads.router, prefix="/api/v1")
 app.include_router(carriers.router, prefix="/api/v1")
 app.include_router(calls.router, prefix="/api/v1")
 app.include_router(negotiations.router, prefix="/api/v1")
 
-# Mount static files for dashboard
 app.mount("/static", StaticFiles(directory="dashboard"), name="static")
 
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information"""
     return {
         "message": "HappyRobot Inbound Carrier Sales API",
         "version": "1.0.0",
@@ -100,7 +87,6 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
     return {
         "status": "healthy",
         "environment": settings.environment,
@@ -110,7 +96,6 @@ async def health_check():
 
 @app.get("/dashboard")
 async def dashboard():
-    """Serve the analytics dashboard"""
     dashboard_path = os.path.join("dashboard", "index.html")
     if os.path.exists(dashboard_path):
         return FileResponse(dashboard_path)
@@ -120,39 +105,27 @@ async def dashboard():
 
 @app.post("/webhook/happyrobot")
 async def happyrobot_webhook(request: Request):
-    """
-    Webhook endpoint for HappyRobot platform integration
-    
-    This endpoint receives call events from HappyRobot and processes them accordingly.
-    """
     try:
-        # Get the webhook payload
         payload = await request.json()
         
-        # Log the webhook event
         logger.info("Received HappyRobot webhook", payload=payload)
         
-        # Process different event types
         event_type = payload.get("event_type")
         call_data = payload.get("call_data", {})
         
         if event_type == "call_started":
-            # Handle call start
             logger.info("Processing call started event", call_id=call_data.get("call_id"))
             
         elif event_type == "call_ended" or event_type == "call_completed":
-            # Handle call end - process and store call data
             logger.info("Processing call completed event", 
                        call_id=call_data.get("happyrobot_call_id"),
                        payload_keys=list(payload.keys()),
                        call_data_keys=list(call_data.keys()))
             
             try:
-                # Import call service to process the data
                 from app.services.call_service import CallService
                 from app.database.connection import SessionLocal
                 
-                # Get database session and process the webhook call data
                 db = SessionLocal()
                 try:
                     call_service = CallService(db)
@@ -163,10 +136,8 @@ async def happyrobot_webhook(request: Request):
                     
             except Exception as db_error:
                 logger.error("Database processing failed", error=str(db_error))
-                # Don't fail the webhook, just log the error
             
         elif event_type == "call_transcript":
-            # Handle transcript received
             logger.info("Processing transcript event", call_id=call_data.get("call_id"))
             
         else:
@@ -184,11 +155,7 @@ async def happyrobot_webhook(request: Request):
 
 @app.post("/api/v1/test/webhook")
 async def test_webhook_processing():
-    """
-    Test endpoint to verify webhook processing works
-    """
     try:
-        # Create a test webhook payload similar to what HappyRobot would send
         test_payload = {
             "event_type": "call_completed",
             "call_data": {
@@ -208,7 +175,6 @@ async def test_webhook_processing():
             }
         }
         
-        # Process it through our webhook handler
         from app.services.call_service import CallService
         from app.database.connection import SessionLocal
         
@@ -231,18 +197,11 @@ async def test_webhook_processing():
 
 @app.post("/api/v1/test/web-call")
 async def trigger_web_call():
-    """
-    Trigger a test web call using HappyRobot's web call feature
-    
-    This endpoint will trigger a web call to demonstrate the system functionality
-    without needing a phone number.
-    """
     try:
         from app.services.happyrobot_service import HappyRobotService
         
         happyrobot_service = HappyRobotService()
         
-        # Trigger a web call with your workflow
         result = await happyrobot_service.trigger_web_call()
         
         logger.info("Web call triggered successfully", result=result)
@@ -261,7 +220,6 @@ async def trigger_web_call():
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler"""
     logger.error("Unhandled exception", 
                 path=request.url.path, 
                 method=request.method,

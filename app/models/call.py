@@ -1,6 +1,3 @@
-"""
-Call model for tracking carrier interactions
-"""
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, Dict, Any
@@ -11,7 +8,6 @@ from .load import Base
 
 
 class CallOutcome(str, Enum):
-    """Enumeration of possible call outcomes"""
     SUCCESSFUL_BOOKING = "successful_booking"
     REJECTED_BY_CARRIER = "rejected_by_carrier" 
     FAILED_VERIFICATION = "failed_verification"
@@ -23,7 +19,6 @@ class CallOutcome(str, Enum):
 
 
 class CallSentiment(str, Enum):
-    """Enumeration of call sentiment classifications"""
     POSITIVE = "positive"
     NEUTRAL = "neutral"
     NEGATIVE = "negative"
@@ -32,42 +27,32 @@ class CallSentiment(str, Enum):
 
 
 class Call(Base):
-    """
-    Call database model for tracking carrier interactions
-    """
     __tablename__ = "calls"
     
     call_id = Column(String, primary_key=True, index=True)
     carrier_mc_number = Column(String, nullable=False, index=True)
     
-    # Call details
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=True)
     duration_seconds = Column(Integer, nullable=True)
     
-    # HappyRobot integration
     happyrobot_call_id = Column(String, nullable=True)
     transcript = Column(Text, nullable=True)
     
-    # Load details
     discussed_load_id = Column(String, nullable=True)
     initial_rate_offered = Column(SQLDecimal(10, 2), nullable=True)
     final_negotiated_rate = Column(SQLDecimal(10, 2), nullable=True)
     
-    # Call classification
     outcome = Column(SQLEnum(CallOutcome), nullable=True)
     sentiment = Column(SQLEnum(CallSentiment), nullable=True)
     
-    # Extracted data
-    extracted_data = Column(JSON, nullable=True)  # Flexible JSON field for call insights
+    extracted_data = Column(JSON, nullable=True)
     
-    # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class CallCreate(BaseModel):
-    """Pydantic model for creating a new call record"""
     call_id: str
     carrier_mc_number: str
     start_time: datetime
@@ -75,7 +60,6 @@ class CallCreate(BaseModel):
 
 
 class CallUpdate(BaseModel):
-    """Pydantic model for updating a call record"""
     end_time: Optional[datetime] = None
     duration_seconds: Optional[int] = None
     transcript: Optional[str] = None
@@ -88,7 +72,6 @@ class CallUpdate(BaseModel):
 
 
 class CallResponse(BaseModel):
-    """Pydantic model for call API responses"""
     model_config = ConfigDict(from_attributes=True)
     
     call_id: str
@@ -109,10 +92,9 @@ class CallResponse(BaseModel):
 
 
 class CallSummary(BaseModel):
-    """Pydantic model for call summary analytics"""
     total_calls: int
     successful_bookings: int
     average_duration: Optional[float] = None
     sentiment_breakdown: Dict[CallSentiment, int]
     outcome_breakdown: Dict[CallOutcome, int]
-    conversion_rate: float  # percentage of calls that resulted in bookings
+    conversion_rate: float
