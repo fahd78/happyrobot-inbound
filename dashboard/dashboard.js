@@ -89,8 +89,7 @@ class Dashboard {
         const { 
             total_calls, 
             successful_bookings, 
-            conversion_rate, 
-            average_duration 
+            conversion_rate 
         } = this.data.summary;
 
         document.getElementById('totalCalls').textContent = total_calls || 0;
@@ -98,8 +97,13 @@ class Dashboard {
         document.getElementById('conversionRate').textContent = 
             conversion_rate ? `${conversion_rate.toFixed(1)}%` : '0%';
         
-        const avgDurationMin = average_duration ? (average_duration / 60).toFixed(1) : 0;
-        document.getElementById('avgDuration').textContent = `${avgDurationMin}min`;
+        // Calculate unique carriers from recent calls
+        const uniqueCarriers = new Set(
+            this.data.recentCalls
+                .filter(call => call.carrier_mc_number)
+                .map(call => call.carrier_mc_number)
+        ).size;
+        document.getElementById('totalCarriers').textContent = uniqueCarriers || 0;
     }
 
     updateCharts() {
@@ -223,11 +227,11 @@ class Dashboard {
             if (!sentiment) return '<span class="text-gray-500">--</span>';
             
             const badges = {
-                'positive': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">😊 Positive</span>',
-                'neutral': '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">😐 Neutral</span>',
-                'negative': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">😞 Negative</span>',
-                'frustrated': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">😤 Frustrated</span>',
-                'satisfied': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">😄 Satisfied</span>'
+                'positive': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Positive</span>',
+                'neutral': '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Neutral</span>',
+                'negative': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Negative</span>',
+                'frustrated': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Frustrated</span>',
+                'satisfied': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Satisfied</span>'
             };
             
             return badges[sentiment] || `<span class="text-gray-500">${sentiment}</span>`;
@@ -241,7 +245,7 @@ class Dashboard {
                 ${call.carrier_mc_number || '--'}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${formatDuration(call.duration_seconds)}
+                ${call.final_negotiated_rate ? '$' + parseFloat(call.final_negotiated_rate).toFixed(0) : '--'}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 ${getOutcomeBadge(call.outcome)}
@@ -295,7 +299,7 @@ class Dashboard {
         document.getElementById('totalCalls').textContent = 'Error';
         document.getElementById('successfulBookings').textContent = 'Error';
         document.getElementById('conversionRate').textContent = 'Error';
-        document.getElementById('avgDuration').textContent = 'Error';
+        document.getElementById('totalCarriers').textContent = 'Error';
     }
 }
 
