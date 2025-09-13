@@ -2,7 +2,7 @@
 Service layer for call management and tracking
 """
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import structlog
@@ -156,7 +156,7 @@ class CallService:
             CallSummary: Analytics summary
         """
         # Get date range
-        cutoff_date = datetime.utcnow() - datetime.timedelta(days=days)
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
         
         # Base query for the time period
         base_query = self.db.query(Call).filter(Call.start_time >= cutoff_date)
